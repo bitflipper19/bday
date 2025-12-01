@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Happy Birthday!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Quicksand:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Quicksand', sans-serif;
+        overflow: hidden;
+      }
+      .font-dancing {
+        font-family: 'Dancing Script', cursive;
+      }
+      .page {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+        opacity: 0;
+        z-index: 0;
+        transform: translateX(0);
+        pointer-events: none;
+      }
+      .page.active {
+        opacity: 1;
+        z-index: 10;
+        transition-delay: 200ms;
+        pointer-events: auto;
+      }
+      .page.past {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      
+      @keyframes fall {
+        0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+      }
+      
+      @keyframes burst {
+          0% {
+              transform: translate(-50%, -50%) rotate(0) scale(1);
+              opacity: 1;
+          }
+          100% {
+              transform: translate(calc(-50% + var(--translateX)), calc(-50% + var(--translateY))) rotate(var(--rotate)) scale(0);
+              opacity: 0;
+          }
+      }
+
+      @keyframes float {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-120vh); opacity: 0; }
+      }
+      .balloon {
+        position: absolute;
+        bottom: -200px;
+        width: 60px;
+        height: 75px;
+        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        animation-name: float;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+      }
+      .balloon::after { /* The balloon knot */
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 10px;
+        background: inherit;
+        border-radius: 50%;
+      }
+      .balloon::before { /* The string */
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 1px;
+        height: 100px;
+        background: rgba(0,0,0,0.2);
+      }
+
+      /* LED Border */
+      .led-border {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        pointer-events: none;
+        border: 3px solid transparent;
+        border-radius: 1px;
+        animation: rainbow-glow 4s linear infinite;
+        background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000) border-box;
+        background-size: 400%;
+        -webkit-mask: 
+            linear-gradient(#fff 0 0) padding-box, 
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+                mask-composite: exclude;
+      }
+
+      @keyframes rainbow-glow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      /* Page 1: Wax Seal Button */
+      #seal-button {
+        animation: pulse-glow 2.5s infinite ease-in-out;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      #seal-button:hover {
+        animation-play-state: paused;
+        transform: scale(1.15);
+        box-shadow: 0 0 30px rgba(20, 20, 20, 0.6);
+      }
+      @keyframes pulse-glow {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+      }
+      
+      /* Page 2, 3, 4: Arrow Buttons */
+      .arrow-button {
+        transition: transform 0.3s ease;
+      }
+      .arrow-button:hover {
+        transform: scale(1.15);
+      }
+      .arrow-button svg path {
+        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+      .arrow-button:hover svg path {
+        transform: translateX(4px);
+      }
+      
+      /* Page 3: Wish Button */
+      #make-wish-button {
+        background: linear-gradient(45deg, #fde68a, #fca5a5, #fde68a);
+        background-size: 200% 200%;
+        animation: gradient-flow 3s ease infinite;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+      #make-wish-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 25px rgba(253, 230, 138, 0.9);
+      }
+      @keyframes gradient-flow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      /* Page 5: Reset Button */
+      #reset-button {
+        transition: background-color 0.3s, color 0.3s;
+      }
+      #reset-button:hover {
+        background-color: white;
+        color: black;
+      }
+      #reset-button svg {
+        transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      }
+      #reset-button:hover svg {
+        transform: rotate(360deg);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="relative w-full h-screen overflow-hidden bg-gray-100">
+      <div class="led-border"></div>
+
+      <!-- Page 1: Letter -->
+      <div id="page-1" class="page">
+        <div class="w-full h-full bg-[#fdfaf2] flex items-center justify-center p-4 overflow-hidden">
+          <div id="envelope" class="relative w-full max-w-4xl aspect-[1.6/1] bg-[#f3efe2] shadow-2xl transition-transform duration-1000 scale-125">
+            <div class="absolute top-0 left-0 w-full h-1/2" style="clip-path: polygon(0 0, 100% 0, 50% 100%)">
+              <div class="w-full h-full bg-[#f9f6ed] opacity-75"></div>
+            </div>
+            <div class="absolute bottom-0 left-0 w-full h-1/2 bg-[#f9f6ed]"></div>
+            <div class="absolute top-0 left-0 w-1/2 h-full" style="clip-path: polygon(0 0, 100% 50%, 0 100%)">
+              <div class="w-full h-full bg-[#f9f6ed] opacity-60"></div>
+            </div>
+            <div class="absolute top-0 right-0 w-1/2 h-full" style="clip-path: polygon(100% 0, 0 50%, 100% 100%)">
+              <div class="w-full h-full bg-[#f9f6ed] opacity-60"></div>
+            </div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-8 md:p-16">
+              <h1 class="font-dancing text-5xl md:text-7xl text-gray-700 mb-6">A Special Note...</h1>
+              <p class="text-gray-600 max-w-md text-lg">...has arrived for someone very special. Click the seal to open it.</p>
+            </div>
+            <button
+              id="seal-button"
+              class="next-button absolute bottom-4 right-4 md:bottom-10 md:right-10 w-20 h-20 md:w-24 md:h-24 rounded-full bg-gray-800 shadow-lg focus:outline-none"
+              aria-label="Open letter"
+            >
+              <div class="absolute inset-0 rounded-full bg-gray-700 transform scale-90 opacity-50 group-hover:opacity-75 transition-opacity"></div>
+              <div class="absolute inset-0 rounded-full border-2 border-gray-900/50 transform scale-95"></div>
+              <svg class="w-12 h-12 md:w-14 md:h-14 text-gray-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 group-hover:text-gray-500 transition-colors" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                <path d="M12 5.5c-1.83 0-3.5.8-4.65 2.15-.39.46-.33 1.13.13 1.52.47.39 1.14.33 1.52-.13C9.72 8.32 10.8 7.5 12 7.5c1.2 0 2.28.82 2.99 2.04.38.65 1.17.88 1.82.5.65-.38.88-1.17.5-1.82C16.14 6.77 14.18 5.5 12 5.5z"/>
+                <path d="M12 12c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 2.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5z"/>
+                <path d="M7.35 11.35c-1.35 1.15-2.35 2.8-2.35 4.65h2c0-1.38.72-2.65 1.8-3.45l-1.45-1.2zm9.3 0l-1.45 1.2c1.08.8 1.8 2.07 1.8 3.45h2c0-1.85-1-3.5-2.35-4.65z"/>
+              </svg>
+               <div class="absolute inset-0 rounded-full bg-gradient-to-br from-white/10 to-transparent"></div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page 2: Photo -->
+      <div id="page-2" class="page">
+        <div class="w-full h-full bg-black text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
+          <div id="page-2-effects-container" class="absolute inset-0 pointer-events-none z-50"></div>
+          <div class="absolute top-0 left-0 w-full h-10 bg-no-repeat bg-center" style="background-image: url(&quot;data:image/svg+xml,%3Csvg width='100' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 C 25 20, 25 0, 50 10 S 75 20, 100 10' stroke='white' fill='transparent' stroke-width='2'/%3E%3C/svg%3E&quot;); background-size: 100px 20px;"></div>
+          <div class="w-full max-w-5xl flex flex-col md:flex-row items-center justify-around z-10 text-center md:text-left">
+            <p class="font-dancing text-2xl md:text-3xl max-w-xs transition-all duration-700 delay-300 opacity-0 -translate-y-5">
+              Happy Birthday to You श्रेया! Wishing you a day full of smiles, laughter, and everything that makes you feel appreciated.
+            </p>
+            <div class="relative my-8 md:my-0 transition-all duration-700 delay-500 opacity-0 scale-90">
+                <img src="WhatsApp Image 2025-12-01 at 20.10.51_fc5f16f2.jpg" alt="Birthday person" class="w-64 md:w-80 rounded-lg shadow-2xl object-cover aspect-[3/4]">
+                <h2 class="font-dancing text-6xl md:text-8xl absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap transition-all duration-700 delay-700 opacity-0 translate-y-5">
+                    <span class="text-yellow-300">happy</span> Birthday
+                </h2>
+            </div>
+            <p class="font-dancing text-2xl md:text-3xl max-w-xs transition-all duration-700 delay-300 opacity-0 -translate-y-5">
+              You have a way of making every space brighter just by being in it. You make things better simply by being yourself.
+            </p>
+          </div>
+          <p class="absolute bottom-8 text-gray-400 text-sm transition-opacity duration-1000 delay-1000 opacity-0">
+            The one who makes life feel as peaceful as the rain
+          </p>
+          <button
+            class="next-button arrow-button absolute bottom-8 right-8 text-yellow-300 transition-all duration-500 delay-1000 opacity-0"
+          >
+            <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Page 3: Cake -->
+      <div id="page-3" class="page">
+        <div class="w-full h-full bg-[#f8f4f0] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+          <div id="celebration-container" class="absolute inset-0 pointer-events-none z-30 overflow-hidden"></div>
+          <div class="text-center relative z-20">
+            <h1 class="text-6xl md:text-8xl font-bold text-gray-800 transition-all duration-700 opacity-0 -translate-y-5">
+              MAKE A WISH, click the cake
+            </h1>
+            <p class="text-gray-500 mt-4 transition-opacity duration-700 delay-200 opacity-0">
+              May this year bring you new adventures, peace, and plenty of reason to smile.
+            </p>
+          </div>
+          <div id="cake-container" class="relative mt-8 w-full max-w-lg flex justify-center items-center z-20">
+            <div class="relative cursor-pointer group transition-transform duration-700 delay-300 opacity-0 scale-90">
+              <img id="cake-img" src="cake png.png" alt="Birthday cake" class="w-96 transition-transform duration-500" />
+              <img id="cake-slice-img" src="slice png.png" alt="Slice of cake" class="w-52 absolute top-1/3 -right-2 -translate-y-8 transition-all duration-700 ease-out opacity-0" />
+            </div>
+          </div>
+          <div id="wish-modal" class="hidden absolute inset-0 bg-black/50 items-center justify-center z-20 transition-opacity duration-500 opacity-0">
+              <div class="bg-white p-8 rounded-lg shadow-xl text-center transition-transform duration-500 scale-95">
+                  <h2 class="text-3xl font-bold mb-4">Make your wish! </h2>
+                  <p class="text-gray-600 mb-6">Close your eyes, think of something wonderful, and click below.</p>
+                  <button 
+                      id="make-wish-button"
+                      class="text-gray-800 font-bold py-3 px-8 rounded-full"
+                  >
+                      I've Made My Wish
+                  </button>
+              </div>
+          </div>
+          <p id="wish-confirmation" class="mt-4 text-xl font-dancing text-yellow-600 opacity-0 transition-opacity relative z-20">Hope it comes true!</p>
+          <button
+            class="next-button arrow-button absolute bottom-8 right-8 text-yellow-500 transition-all duration-500 opacity-0 pointer-events-none z-20"
+          >
+             <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Page 4: Memory Letter -->
+      <div id="page-4" class="page">
+        <div class="w-full h-full bg-gray-50 flex flex-col md:flex-row items-center justify-center p-4 md:p-8 overflow-auto">
+          <div class="w-full md:w-1/3 h-full flex flex-col justify-center items-center space-y-4 p-4 shrink-0">
+            <div class="photo-item relative bg-white p-2 shadow-lg transition-all duration-700 -rotate-6 opacity-0 translate-y-10" style="transition-delay: 300ms;">
+              <img src="IMG-20251201-WA0021[1].jpg" alt="Memory" class="w-48 h-auto object-cover" />
+              <div class="absolute -top-1 -left-1 w-6 h-6 bg-gray-300 opacity-50 transform -rotate-45"></div>
+            </div>
+            <div class="photo-item relative bg-white p-2 shadow-lg transition-all duration-700 rotate-3 opacity-0 translate-y-10" style="transition-delay: 500ms;">
+              <img src="IMG-20251201-WA0014[1].jpg" alt="Memory" class="w-48 h-auto object-cover" />
+              <div class="absolute -top-1 -left-1 w-6 h-6 bg-gray-300 opacity-50 transform -rotate-45"></div>
+            </div>
+            <div class="photo-item relative bg-white p-2 shadow-lg transition-all duration-700 -rotate-2 opacity-0 translate-y-10" style="transition-delay: 700ms;">
+              <img src="IMG-20251201-WA0015[1].jpg" alt="Memory" class="w-48 h-auto object-cover" />
+              <div class="absolute -top-1 -left-1 w-6 h-6 bg-gray-300 opacity-50 transform -rotate-45"></div>
+            </div>
+          </div>
+          <div class="w-full md:w-2/3 h-full flex flex-col justify-center p-4 md:p-12 transition-opacity duration-1000 delay-500 opacity-0">
+            <h1 class="font-dancing text-5xl md:text-7xl text-gray-800 mb-6">Dear Shreya,</h1>
+            <div class="text-gray-600 space-y-4 text-base md:text-lg leading-relaxed">
+              <p>
+                There are many things I don’t say, but they sit inside me all the time. I don’t know if you realise it, but your name alone can calm me on the days when everything else feels messy.
+              </p>
+              <p>
+                Sometimes, without planning, I imagine a small future with you. A slow morning where sunlight falls on your face. A small house, a big garden. Your laughter coming from another room. A round bed where we fall asleep together, a tiny table where we eat together. Your hand finding mine like it’s normal, like it belongs there.
+              </p>
+              <p>
+                I don’t know if life will ever give me something like this. But I know I’d wait for it-quietly, patiently- just for one moment where I get to hold your face and feel at peace.
+              </p>
+              <p>
+                Most days I stay quiet, but inside, everything feels loud. It’s always you-your smile, your voice, the way my heart feels less heavy when I think of you.
+              </p>
+              <p>
+                Shreya…..you don’t know how much I miss you. Even on nights when I act strong, I’m awake, thinking of you again and again. You don’t know how much I would try, how much I would give, if you ever opened the door to a tomorrow with me in it.
+              </p>
+              <p>
+                I don’t know what the future will be, but I know one thing- you’re the only future that feels warm when I imagine it.
+              </p>
+            </div>
+            <p class="font-dancing text-4xl text-right mt-8 text-gray-700">With lots of love <br> Aadi </p>
+          </div>
+          <button
+            class="next-button arrow-button absolute bottom-8 right-8 text-gray-500 transition-opacity duration-500 delay-1000 opacity-0"
+          >
+            <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Page 5: Collage -->
+      <div id="page-5" class="page">
+        <div class="w-full h-full bg-black flex items-center justify-center p-4 overflow-hidden">
+          <div class="grid grid-cols-3 grid-rows-3 gap-2 w-full max-w-4xl aspect-square">
+            <div class="collage-item col-span-2 row-span-2 bg-white p-1.5 shadow-lg transition-all duration-700 ease-in-out opacity-0 scale-90">
+              <img src="IMG-20251201-WA0022[1].jpg" alt="Collage image 1" class="w-full h-full object-cover" />
+            </div>
+            <div class="collage-item col-span-1 row-span-1 bg-white p-1.5 shadow-lg transition-all duration-700 ease-in-out opacity-0 scale-90">
+              <img src="IMG-20251201-WA0025[1].jpg" alt="Collage image 2" class="w-full h-full object-cover" />
+            </div>
+            <div class="collage-item col-span-1 row-span-1 bg-white p-1.5 shadow-lg transition-all duration-700 ease-in-out opacity-0 scale-90">
+              <img src="IMG-20251201-WA0015[1].jpg" alt="Collage image 3" class="w-full h-full object-cover" />
+            </div>
+            <div class="collage-item col-span-1 row-span-2 bg-white p-1.5 shadow-lg transition-all duration-700 ease-in-out opacity-0 scale-90">
+              <img src="IMG-20251201-WA0016[1].jpg" alt="Collage image 4" class="w-full h-full object-cover" />
+            </div>
+            <div class="collage-item col-span-2 row-span-1 bg-white p-1.5 shadow-lg transition-all duration-700 ease-in-out opacity-0 scale-90">
+              <img src="IMG-20251201-WA0027[1].jpg" alt="Collage image 5" class="w-full h-full object-cover" />
+            </div>
+          </div>
+          <div id="collage-overlay" class="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white text-center transition-opacity duration-1000 opacity-0 pointer-events-none" style="transition-delay: 1500ms;">
+              <h1 class="font-dancing text-6xl md:text-8xl">Cherish Every Moment</h1>
+              <p class="mt-4 text-xl max-w-lg">Thank you for being you. Here's to another year of wonderful memories.</p>
+              <button 
+                id="reset-button"
+                class="mt-8 flex items-center gap-2 border-2 border-white rounded-full py-2 px-6 transition-colors"
+              >
+                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                  </svg>
+                  Start Over
+              </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script type="module">
+      document.addEventListener('DOMContentLoaded', () => {
+        let currentPage = 0;
+        const pages = document.querySelectorAll('.page');
+        const nextButtons = document.querySelectorAll('.next-button');
+        const resetButton = document.getElementById('reset-button');
+      
+        // --- Page Specific Elements ---
+        const envelope = document.getElementById('envelope');
+        const cakeContainer = document.getElementById('cake-container');
+        const cakeImg = document.getElementById('cake-img');
+        const cakeSliceImg = document.getElementById('cake-slice-img');
+        const wishModal = document.getElementById('wish-modal');
+        const makeWishButton = document.getElementById('make-wish-button');
+        const wishConfirmation = document.getElementById('wish-confirmation');
+        const page3NextButton = document.querySelector('#page-3 .next-button');
+        const collageItems = document.querySelectorAll('.collage-item');
+        const collageOverlay = document.getElementById('collage-overlay');
+
+        // --- Effect Functions ---
+        function createConfetti(container) {
+          if (!container) return;
+          container.innerHTML = ''; // Clear previous effects
+          const colors = ['#fde68a', '#fca5a5', '#818cf8', '#6ee7b7', '#a78bfa'];
+          for (let i = 0; i < 150; i++) {
+            const piece = document.createElement('div');
+            const shape = Math.random();
+            if (shape > 0.8) {
+              piece.className = 'absolute w-1 h-8'; // Streamer
+            } else if (shape > 0.4) {
+              piece.className = 'absolute w-3 h-3 rounded-full'; // Circle
+            } else {
+              piece.className = 'absolute w-2 h-4 rounded-sm'; // Rectangle
+            }
+            piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            piece.style.left = `${Math.random() * 100}%`;
+            piece.style.animation = `fall ${Math.random() * 5 + 5}s linear ${Math.random() * 3}s infinite`;
+            piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+            piece.style.top = '-10vh';
+            container.appendChild(piece);
+          }
+        }
+      
+        function createBalloons(container) {
+          if (!container) return;
+          const colors = ['#fca5a5', '#818cf8', '#6ee7b7', '#a78bfa', '#fde68a'];
+          const balloonCount = 15;
+          for (let i = 0; i < balloonCount; i++) {
+              const balloon = document.createElement('div');
+              balloon.className = 'balloon';
+              const color = colors[i % colors.length];
+              balloon.style.background = `radial-gradient(circle at 30% 30%, ${color}ff, ${color}cc)`;
+              balloon.style.left = `${Math.random() * 90}%`;
+              balloon.style.animationDuration = `${Math.random() * 10 + 15}s`;
+              balloon.style.animationDelay = `${Math.random() * 5}s`;
+              container.appendChild(balloon);
+          }
+        }
+      
+        function createCelebrationEffect() {
+          const container = document.getElementById('celebration-container');
+          if (!container) return;
+          container.innerHTML = '';
+          const colors = ['#fde68a', '#fca5a5', '#818cf8', '#6ee7b7', '#a78bfa', '#f472b6'];
+          const particleCount = 100;
+
+          for (let i = 0; i < particleCount; i++) {
+              const particle = document.createElement('div');
+              particle.style.position = 'absolute';
+              particle.style.top = '50%';
+              particle.style.left = '50%';
+              particle.style.pointerEvents = 'none';
+              const isStreamer = Math.random() > 0.7;
+              const color = colors[Math.floor(Math.random() * colors.length)];
+              particle.style.backgroundColor = color;
+              
+              if (isStreamer) {
+                  particle.style.width = `${Math.random() * 2 + 1}px`;
+                  particle.style.height = `${Math.random() * 15 + 8}px`;
+                  particle.style.borderRadius = '1px';
+              } else {
+                  const size = `${Math.random() * 6 + 4}px`;
+                  particle.style.width = size;
+                  particle.style.height = size;
+                  particle.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+              }
+
+              const angle = Math.random() * 2 * Math.PI;
+              const velocity = Math.random() * 60 + 20;
+              const translateX = Math.cos(angle) * velocity;
+              const translateY = Math.sin(angle) * velocity;
+              const rotate = Math.random() * 500 - 250;
+
+              particle.style.animation = 'burst 1s ease-out forwards';
+              particle.style.setProperty('--translateX', `${translateX}vmin`);
+              particle.style.setProperty('--translateY', `${translateY}vmin`);
+              particle.style.setProperty('--rotate', `${rotate}deg`);
+              container.appendChild(particle);
+              setTimeout(() => particle.remove(), 1000);
+          }
+        }
+
+        // --- Core Functions ---
+      
+        function triggerPageAnimations(pageIndex) {
+          const page = pages[pageIndex];
+          if (!page) return;
+
+          // Reset animations on all elements first, just in case
+          document.querySelectorAll('.page [class*="transition-"]').forEach(el => {
+            el.classList.add('opacity-0');
+            if (String(el.className).includes('translate-y')) el.classList.add('-translate-y-5', 'translate-y-10');
+            if (String(el.className).includes('scale')) el.classList.add('scale-90');
+          });
+          
+          // Trigger animations for the current page's elements
+          const animatedElements = page.querySelectorAll('[class*="transition-"]');
+          animatedElements.forEach(el => {
+            el.classList.remove('opacity-0', '-translate-y-5', 'translate-y-10', 'scale-90');
+          });
+
+          // Page-specific setup
+          if (page.id === 'page-1' && envelope) {
+              setTimeout(() => envelope.classList.remove('scale-125'), 100);
+          }
+          if (page.id === 'page-2') {
+              const container = document.getElementById('page-2-effects-container');
+              if (container) {
+                  createConfetti(container);
+                  createBalloons(container);
+              }
+          }
+          if (page.id === 'page-5') {
+            collageItems.forEach((item, index) => {
+              setTimeout(() => {
+                item.classList.remove('opacity-0', 'scale-90');
+              }, 300 + index * 150);
+            });
+            setTimeout(() => {
+              collageOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            }, 1500);
+          } else {
+              collageOverlay.classList.add('opacity-0', 'pointer-events-none');
+          }
+        }
+
+        function showPage(index) {
+          pages.forEach((page, i) => {
+            page.classList.remove('active', 'past');
+            if (i < index) {
+              page.classList.add('past');
+            }
+          });
+          pages[index].classList.add('active');
+          triggerPageAnimations(index);
+        }
+
+        function nextPage() {
+          if (currentPage < pages.length - 1) {
+            currentPage++;
+            showPage(currentPage);
+          }
+        }
+
+        function resetApp() {
+          // Reset Page 1
+          if(envelope) envelope.classList.add('scale-125');
+
+          // Reset Page 3 state
+          cakeImg.classList.remove('transform', '-translate-x-12');
+          cakeSliceImg.classList.remove('opacity-100', 'translate-x-10');
+          wishModal.classList.add('hidden', 'opacity-0');
+          wishModal.classList.remove('flex');
+          wishConfirmation.classList.add('opacity-0');
+          page3NextButton.classList.add('opacity-0', 'pointer-events-none');
+
+          // Reset Page 5 state
+          collageItems.forEach(item => {
+              item.classList.add('opacity-0', 'scale-90');
+          });
+
+          currentPage = 0;
+          showPage(currentPage);
+        }
+
+        // --- Event Listeners ---
+        nextButtons.forEach(button => {
+          button.addEventListener('click', nextPage);
+        });
+        
+        if (resetButton) {
+          resetButton.addEventListener('click', resetApp);
+        }
+
+        // Page 3: Cake Logic
+        if (cakeContainer) {
+          cakeContainer.addEventListener('click', () => {
+            if (cakeImg.classList.contains('-translate-x-12')) return;
+            cakeImg.classList.add('transform', '-translate-x-12');
+            cakeSliceImg.classList.add('opacity-100', 'translate-x-10');
+            setTimeout(() => {
+              wishModal.classList.remove('hidden');
+              wishModal.classList.add('flex');
+              setTimeout(() => {
+                wishModal.classList.remove('opacity-0');
+                wishModal.querySelector('div').classList.remove('scale-95');
+              }, 10);
+            }, 500);
+          });
+        }
+
+        if (makeWishButton) {
+          makeWishButton.addEventListener('click', () => {
+            createCelebrationEffect();
+            wishModal.classList.add('opacity-0');
+            wishModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+              wishModal.classList.add('hidden');
+              wishModal.classList.remove('flex');
+              wishConfirmation.classList.remove('opacity-0');
+              page3NextButton.classList.remove('opacity-0', 'pointer-events-none');
+            }, 500);
+          });
+        }
+
+        // --- Initial Load ---
+        showPage(0);
+      });
+    </script>
+  </body>
+</html>
